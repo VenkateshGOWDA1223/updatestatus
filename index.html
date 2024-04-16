@@ -61,6 +61,7 @@
 <body>
     <h1>Update Order Status</h1>
     <input type="text" id="updateOrderId" placeholder="Enter Order ID" autofocus>
+    <input type="text" id="customerName" placeholder="Enter Customer Name">
     <input type="text" id="newStatus" placeholder="Enter New Status">
     <button onclick="updateOrderStatus()">Update Status</button>
     <div id="ordersList"></div>
@@ -69,31 +70,33 @@
     <script src="https://www.gstatic.com/firebasejs/7.24.0/firebase-database.js"></script>
     <script>
         const firebaseConfig = {
-  apiKey: "AIzaSyBq3M6NlHFAKMlXR2B7AzmRBB3TNWqS9TU",
-  authDomain: "orders-3fc07.firebaseapp.com",
-  projectId: "orders-3fc07",
-  storageBucket: "orders-3fc07.appspot.com",
-  messagingSenderId: "845653975774",
-  appId: "1:845653975774:web:b4b0adacc766c94498584f"
-};
+            apiKey: "AIzaSyBq3M6NlHFAKMlXR2B7AzmRBB3TNWqS9TU",
+            authDomain: "orders-3fc07.firebaseapp.com",
+            projectId: "orders-3fc07",
+            storageBucket: "orders-3fc07.appspot.com",
+            messagingSenderId: "845653975774",
+            appId: "1:845653975774:web:b4b0adacc766c94498584f"
+        };
         firebase.initializeApp(firebaseConfig);
 
         const orderStatusRef = firebase.database().ref('orders');
 
         function updateOrderStatus() {
             const orderId = document.getElementById('updateOrderId').value.trim();
+            const customerName = document.getElementById('customerName').value.trim();
             const newStatus = document.getElementById('newStatus').value.trim();
-            if (!orderId || !newStatus) {
-                alert('Please fill out both fields.');
+            if (!orderId || !newStatus || !customerName) {
+                alert('Please fill out all fields.');
                 return;
             }
             orderStatusRef.child(orderId).update({
+                customerName: customerName,
                 status: newStatus
             }, function(error) {
                 if (error) {
                     alert('Update failed: ' + error.message);
                 } else {
-                    alert('Order status updated successfully.');
+                    alert('Order and customer status updated successfully.');
                     fetchOrders();  // Refresh the list of all orders
                 }
             });
@@ -106,7 +109,7 @@
             }
             orderStatusRef.child(orderId).remove()
             .then(() => {
-                alert('Status deleted successfully');
+                alert('Order deleted successfully');
                 fetchOrders();  // Refresh the list of all orders
             })
             .catch(error => {
@@ -114,8 +117,9 @@
             });
         }
 
-        function editStatus(orderId, status) {
+        function editStatus(orderId, status, customerName) {
             document.getElementById('updateOrderId').value = orderId;
+            document.getElementById('customerName').value = customerName;
             document.getElementById('newStatus').value = status;
             document.getElementById('newStatus').focus();
         }
@@ -128,9 +132,9 @@
                 if (data) {
                     for (const orderId in data) {
                         display.innerHTML += `<div class="order-item">
-                                                Order ID: ${orderId} - Status: ${data[orderId].status}
+                                                Order ID: ${orderId} - Customer: ${data[orderId].customerName} - Status: ${data[orderId].status}
                                                 <div class="order-actions">
-                                                    <button onclick="editStatus('${orderId}', '${data[orderId].status}')">Edit</button>
+                                                    <button onclick="editStatus('${orderId}', '${data[orderId].status}', '${data[orderId].customerName}')">Edit</button>
                                                     <button onclick="deleteOrderStatus('${orderId}')">Delete</button>
                                                 </div>
                                               </div>`;
@@ -145,4 +149,3 @@
     </script>
 </body>
 </html>
-
