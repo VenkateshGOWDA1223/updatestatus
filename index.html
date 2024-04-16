@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta viewport="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Seller Interface</title>
     <style>
         body {
@@ -21,6 +21,9 @@
             color: white;
             cursor: pointer;
         }
+        #statusDisplay {
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -28,11 +31,13 @@
     <input type="text" id="updateOrderId" placeholder="Enter Order ID">
     <input type="text" id="newStatus" placeholder="Enter New Status">
     <button onclick="updateOrderStatus()">Update Status</button>
+    <button onclick="deleteOrderStatus()">Delete Status</button>
+    <div id="statusDisplay"></div>
 
     <script src="https://www.gstatic.com/firebasejs/7.24.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/7.24.0/firebase-database.js"></script>
     <script>
-       const firebaseConfig = {
+         const firebaseConfig = {
   apiKey: "AIzaSyBq3M6NlHFAKMlXR2B7AzmRBB3TNWqS9TU",
   authDomain: "orders-3fc07.firebaseapp.com",
   projectId: "orders-3fc07",
@@ -42,17 +47,49 @@
 };
         firebase.initializeApp(firebaseConfig);
 
+        const orderStatusRef = firebase.database().ref('orders');
+
         function updateOrderStatus() {
             const orderId = document.getElementById('updateOrderId').value;
             const newStatus = document.getElementById('newStatus').value;
-            firebase.database().ref('orders/' + orderId).update({
+            orderStatusRef.child(orderId).update({
                 status: newStatus
             }, function(error) {
                 if (error) {
                     alert('Update failed: ' + error.message);
                 } else {
                     alert('Order status updated successfully.');
+                    displayStatus(orderId);
                 }
+            });
+        }
+
+        function displayStatus(orderId) {
+            orderStatusRef.child(orderId).once('value', snapshot => {
+                const data = snapshot.val();
+                if (data) {
+                    document.getElementById('statusDisplay').innerHTML = `Order ID: ${orderId} - Status: ${data.status} <button onclick="editStatus('${orderId}', '${data.status}')">Edit</button>`;
+                } else {
+                    document.getElementById('statusDisplay').innerHTML = 'No status found for this order.';
+                }
+            });
+        }
+
+        function editStatus(orderId, status) {
+            document.getElementById('updateOrderId').value = orderId;
+            document.getElementById('newStatus').value = status;
+            document.getElementById('newStatus').focus();
+        }
+
+        function deleteOrderStatus() {
+            const orderId = document.getElementById('updateOrderId').value;
+            orderStatusRef.child(orderId).remove()
+            .then(() => {
+                alert('Status deleted successfully');
+                document.getElementById('statusDisplay').innerHTML = '';
+            })
+            .catch(error => {
+                alert('Delete failed: ' + error.message);
             });
         }
     </script>
